@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Studio & Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); }
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5);
+            animation: pulse-ring-anim 2s infinite;
+        }
+        @keyframes pulse-ring-anim {
+            70% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col md:flex-row overflow-hidden bg-slate-950">
+
+    <!-- Sidebar / Navigation -->
+    <aside class="w-full md:w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between shrink-0 glass z-20">
+        <div>
+            <!-- Header Logo -->
+            <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid font-bold fa-brain text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-slate-100 leading-none">Анвар ИИ</h1>
+                        <span class="text-xs text-indigo-400 font-medium">Универсальный ИИ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-3 space-y-1">
+                <button onclick="switchTab('chat')" id="nav-chat" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition font-medium text-sm active-tab bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+                    <i class="fa-solid fa-comments text-base w-5 text-center"></i>
+                    <span>Текстовый Чат</span>
+                </button>
+                <button onclick="switchTab('image')" id="nav-image" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-white transition font-medium text-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles text-base w-5 text-center"></i>
+                    <span>Генерация Фото</span>
+                </button>
+                <button onclick="switchTab('audio')" id="nav-audio" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-white transition font-medium text-sm">
+                    <i class="fa-solid fa-volume-high text-base w-5 text-center"></i>
+                    <span>Озвучка Текста</span>
+                </button>
+                <button onclick="switchTab('radio')" id="nav-radio" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-white transition font-medium text-sm">
+                    <i class="fa-solid fa-radio text-base w-5 text-center"></i>
+                    <span>Релакс Радио</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- API Key Status / Information Box -->
+        <div class="p-4 m-3 rounded-xl bg-slate-800/40 border border-slate-800/80 text-xs text-slate-400">
+            <div class="flex items-center gap-2 mb-1.5 text-slate-300 font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Gemini API Подключен</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+                Доступны модели генерации текста, картинок и озвучки без дополнительной настройки.
+            </p>
+        </div>
+    </aside>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+
+        <!-- Notification / Toast Container -->
+        <div id="toast-container" class="absolute top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+        <!-- ================= TAB 1: CHAT ================= -->
+        <section id="tab-chat" class="flex-1 flex flex-col h-full">
+            <!-- Top Chat Header -->
+            <header class="p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40 glass">
+                <div class="flex items-center gap-3">
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                    <div>
+                        <h2 class="text-sm font-semibold text-slate-200">Умный Ассистент</h2>
+                        <p class="text-[11px] text-slate-400">Модель: gemini-3-flash-preview</p>
+                    </div>
+                </div>
+                <button onclick="clearChat()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/20 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Очистить чат</span>
+                </button>
+            </header>
+
+            <!-- Chat Messages Log -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
+                <!-- Welcome Message -->
+                <div class="flex gap-3 max-w-3xl">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0 text-xs">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 text-slate-200 text-sm leading-relaxed shadow-sm">
+                         Привет! Я твой умный ИИ-помощник. Чем я могу помочь тебе сегодня? Ты можешь задавать мне любые вопросы, просить написать код, перевести текст или составить план!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input Bar -->
+            <div class="p-4 border-t border-slate-800/80 bg-slate-900/30 glass">
+                <form id="chat-form" onsubmit="handleChatSubmit(event)" class="max-w-4xl mx-auto flex items-end gap-2 bg-slate-900 border border-slate-700/60 rounded-2xl p-2 focus-within:border-indigo-500 transition-colors shadow-lg">
+                    <textarea id="chat-input" rows="1" placeholder="Спросите что-нибудь у ИИ..." class="flex-1 bg-transparent px-3 py-2 text-sm text-slate-100 focus:outline-none resize-none max-h-32 custom-scrollbar placeholder-slate-500" onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); handleChatSubmit(event); }"></textarea>
+                    <button type="submit" id="chat-send-btn" class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shrink-0 transition disabled:opacity-50 shadow-md shadow-indigo-600/20">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </form>
+                <div class="text-[10px] text-center text-slate-500 mt-2">
+                    Shift + Enter — новая строка. Enter — отправить.
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: IMAGE GENERATION ================= -->
+        <section id="tab-image" class="flex-1 flex flex-col h-full hidden overflow-y-auto custom-scrollbar p-4 md:p-6">
+            <div class="max-w-4xl mx-auto w-full space-y-6">
+                <!-- Header -->
+                <div>
+                    <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                        Генерация Изображений
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Создавайте реалистичные арты и фото по вашему текстовому описанию с помощью Gemini 3.1 Flash Image.</p>
+                </div>
+
+                <!-- Input Controls Box -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl glass">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-2">Промпт (Описание картинки на английском или русском):</label>
+                        <textarea id="image-prompt" rows="3" placeholder="Например: Futuristic city with flying cars at sunset, cyberpunk style, hyper-realistic 8k..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition placeholder-slate-600 custom-scrollbar"></textarea>
+                    </div>
+
+                    <!-- Options Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-2">Формат Кадра (Aspect Ratio):</label>
+                            <select id="image-aspect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
+                                <option value="1:1">1:1 (Квадрат)</option>
+                                <option value="16:9" selected>16:9 (Широкоформатный)</option>
+                                <option value="9:16">9:16 (Вертикальный / Story)</option>
+                                <option value="4:3">4:3 (Классический)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="generateImage()" id="generate-img-btn" class="w-full h-10 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 transition">
+                                <i class="fa-solid fa-sparkles"></i>
+                                <span>Сгенерировать Картинку</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generated Image Preview -->
+                <div id="image-result-box" class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 min-h-[350px] flex flex-col items-center justify-center relative overflow-hidden">
+                    <div id="image-placeholder" class="text-center text-slate-500 space-y-3">
+                        <div class="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto text-slate-600 text-2xl">
+                            <i class="fa-solid fa-image"></i>
+                        </div>
+                        <p class="text-sm">Введите описание выше и нажмите «Сгенерировать»</p>
+                    </div>
+
+                    <!-- Loader -->
+                    <div id="image-loader" class="hidden flex-col items-center justify-center gap-3 text-slate-400">
+                        <div class="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                        <p class="text-xs font-medium animate-pulse">ИИ рисует шедевр, подождите...</p>
+                    </div>
+
+                    <!-- Result Image Container -->
+                    <div id="image-output-wrapper" class="hidden w-full flex-col items-center gap-4">
+                        <img id="image-output" src="" alt="Сгенерированное изображение" class="max-h-[500px] w-auto rounded-xl border border-slate-700 shadow-2xl object-contain">
+                        <div class="flex gap-3">
+                            <a id="download-img-btn" download="ai-generated.png" href="#" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-xl border border-slate-700 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-download"></i> Скачать
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: TTS / TEXT TO SPEECH ================= -->
+        <section id="tab-audio" class="flex-1 flex flex-col h-full hidden overflow-y-auto custom-scrollbar p-4 md:p-6">
+            <div class="max-w-4xl mx-auto w-full space-y-6">
+                <!-- Header -->
+                <div>
+                    <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-volume-high text-indigo-400"></i>
+                        Озвучка Текста (Text-to-Speech)
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Превратите текст в естественную речь с помощью высококачественной озвучки Gemini 2.5.</p>
+                </div>
+
+                <!-- Input Controls -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl glass">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-2">Текст для озвучки:</label>
+                        <textarea id="tts-input" rows="4" placeholder="Введите текст, который нужно озвучить..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition placeholder-slate-600 custom-scrollbar">Привет! Это тестовая озвучка голосом ИИ. Попробуй озвучить любой текст!</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-2">Выбор Голоса:</label>
+                            <select id="tts-voice" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
+                                <option value="Kore">Kore (Фирменный, четкий)</option>
+                                <option value="Puck">Puck (Энергичный, жизнерадостный)</option>
+                                <option value="Zephyr">Zephyr (Яркий, выразительный)</option>
+                                <option value="Fenrir">Fenrir (Сильный, глубокий)</option>
+                                <option value="Charon">Charon (Информативный, сдержанный)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="generateTTS()" id="tts-btn" class="w-full h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition">
+                                <i class="fa-solid fa-play"></i>
+                                <span>Озвучить Текст</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Player Box -->
+                <div id="tts-result-box" class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 flex flex-col items-center justify-center">
+                    <div id="tts-placeholder" class="text-center text-slate-500 space-y-2">
+                        <i class="fa-solid fa-file-audio text-3xl text-slate-600"></i>
+                        <p class="text-xs">Результат озвучки появится здесь</p>
+                    </div>
+
+                    <div id="tts-loader" class="hidden flex-col items-center gap-3 text-slate-400">
+                        <div class="w-8 h-8 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                        <p class="text-xs font-medium">Генерация аудио...</p>
+                    </div>
+
+                    <div id="tts-audio-container" class="hidden w-full max-w-md flex-col items-center gap-4">
+                        <audio id="tts-audio-player" controls class="w-full"></audio>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: RELAX RADIO & AMBIENCE ================= -->
+        <section id="tab-radio" class="flex-1 flex flex-col h-full hidden overflow-y-auto custom-scrollbar p-4 md:p-6">
+            <div class="max-w-4xl mx-auto w-full space-y-6">
+                <!-- Header -->
+                <div>
+                    <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-radio text-indigo-400"></i>
+                        Спокойное Радио & Звуки Природы
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Слушайте расслабляющую музыку, Lofi-биты или включайте фоновые звуки природы для работы и отдыха.</p>
+                </div>
+
+                <!-- Main Player Card -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl glass relative overflow-hidden flex flex-col md:flex-row items-center gap-6">
+                    <div class="w-32 h-32 rounded-2xl bg-gradient-to-br from-indigo-600/30 to-purple-600/30 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 shadow-lg relative group">
+                        <i id="radio-disc-icon" class="fa-solid fa-compact-disc text-5xl transition-transform duration-1000"></i>
+                        <span id="live-badge" class="hidden absolute top-2 right-2 px-2 py-0.5 rounded-full bg-rose-500/80 text-[10px] text-white font-semibold uppercase tracking-wider animate-pulse">Live</span>
+                    </div>
+
+                    <div class="flex-1 text-center md:text-left space-y-3 w-full">
+                        <div>
+                            <span class="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Сейчас играет</span>
+                            <h3 id="current-station-title" class="text-lg font-bold text-slate-100">Выберите радиостанцию</h3>
+                            <p id="current-station-desc" class="text-xs text-slate-400 mt-0.5">Нажмите на любую станцию ниже для запуска</p>
+                        </div>
+
+                        <!-- Player Controls -->
+                        <div class="flex items-center justify-center md:justify-start gap-4 pt-2">
+                            <button onclick="toggleRadioPlay()" id="radio-toggle-btn" class="w-12 h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition shadow-lg shadow-indigo-600/30 text-lg">
+                                <i id="radio-play-icon" class="fa-solid fa-play"></i>
+                            </button>
+                            <div class="flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-2 rounded-xl">
+                                <i class="fa-solid fa-volume-low text-xs text-slate-400"></i>
+                                <input type="range" id="radio-volume" min="0" max="1" step="0.01" value="0.7" oninput="changeRadioVolume(this.value)" class="w-24 accent-indigo-500 cursor-pointer">
+                                <i class="fa-solid fa-volume-high text-xs text-slate-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Radio Stations Grid -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-semibold text-slate-300">Музыкальные Станции</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="stations-list">
+                        <!-- Stations will be dynamically rendered or static -->
+                    </div>
+                </div>
+
+                <!-- Nature Sounds Mixer -->
+                <div class="space-y-3 pt-2">
+                    <h3 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-rain text-indigo-400"></i>
+                        Атмосферные Звуки (Фон)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-cloud-showers-heavy text-slate-400 w-5 text-center"></i>
+                                <span class="text-xs font-medium text-slate-200">Дождь за окном</span>
+                            </div>
+                            <button onclick="toggleAmbientSound('rain')" id="amb-btn-rain" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition">Включить</button>
+                        </div>
+                        <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-fire text-slate-400 w-5 text-center"></i>
+                                <span class="text-xs font-medium text-slate-200">Теплый Костер</span>
+                            </div>
+                            <button onclick="toggleAmbientSound('fire')" id="amb-btn-fire" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition">Включить</button>
+                        </div>
+                        <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-water text-slate-400 w-5 text-center"></i>
+                                <span class="text-xs font-medium text-slate-200">Морской Прибой</span>
+                            </div>
+                            <button onclick="toggleAmbientSound('waves')" id="amb-btn-waves" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition">Включить</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- Hidden Radio Audio Tag -->
+            <audio id="radio-audio-player" crossorigin="anonymous"></audio>
+        </section>
+
+    </main>
+
+    <script>
+        // API Base URL & Empty Key (Provided by runtime Canvas environment)
+        const apiKey = "";
+        
+        // Navigation Handler
+        function switchTab(tabName) {
+            ['chat', 'image', 'audio', 'radio'].forEach(tab => {
+                const el = document.getElementById(`tab-${tab}`);
+                const nav = document.getElementById(`nav-${tab}`);
+                if (tab === tabName) {
+                    el.classList.remove('hidden');
+                    nav.classList.add('bg-indigo-600/20', 'text-indigo-400', 'border', 'border-indigo-500/30');
+                    nav.classList.remove('text-slate-400');
+                } else {
+                    el.classList.add('hidden');
+                    nav.classList.remove('bg-indigo-600/20', 'text-indigo-400', 'border', 'border-indigo-500/30');
+                    nav.classList.add('text-slate-400');
+                }
+            });
+        }
+
+        // Notification Helper
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-rose-900/90 border-rose-700 text-rose-200' : 'bg-slate-800/90 border-slate-700 text-slate-200';
+            
+            toast.className = `px-4 py-3 rounded-xl border shadow-xl text-xs flex items-center gap-2 pointer-events-auto backdrop-blur-md transition-all transform duration-300 translate-y-2 ${bgClass}`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info'}"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Exponential Backoff Fetch Helper
+        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw err;
+            }
+        }
+
+        // ================= 1. CHAT MODULE =================
+        let chatHistory = [];
+
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById('chat-input');
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            // Clear Input
+            inputEl.value = '';
+            inputEl.style.height = 'auto';
+
+            // Append User Message UI
+            appendChatMessage('user', text);
+
+            // Prepare History for API
+            chatHistory.push({ role: "user", parts: [{ text }] });
+
+            // Show Loading Indicator
+            const loadingId = appendLoadingMessage();
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: chatHistory,
+                    systemInstruction: {
+                        parts: [{ text: "Ты полезный, умный и дружелюбный ИИ-помощник. Отвечай подробно, вежливо и структурированно на русском языке." }]
+                    }
+                };
+
+                const data = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                removeLoadingMessage(loadingId);
+
+                const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Не удалось получить ответ.";
+                appendChatMessage('model', aiText);
+                chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+
+            } catch (err) {
+                removeLoadingMessage(loadingId);
+                showToast("Ошибка соединения с ИИ. Попробуйте еще раз.", "error");
+            }
+        }
+
+        function appendChatMessage(role, text) {
+            const container = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            
+            if (role === 'user') {
+                msgDiv.className = 'flex gap-3 max-w-3xl ml-auto justify-end';
+                msgDiv.innerHTML = `
+                    <div class="bg-indigo-600 text-white rounded-2xl p-4 text-sm leading-relaxed shadow-md">
+                        ${escapeHtml(text)}
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 shrink-0 text-xs">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                `;
+            } else {
+                msgDiv.className = 'flex gap-3 max-w-3xl';
+                msgDiv.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0 text-xs">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 text-slate-200 text-sm leading-relaxed shadow-sm whitespace-pre-wrap">
+                        ${escapeHtml(text)}
+                    </div>
+                `;
+            }
+
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendLoadingMessage() {
+            const container = document.getElementById('chat-messages');
+            const id = 'loader-' + Date.now();
+            const msgDiv = document.createElement('div');
+            msgDiv.id = id;
+            msgDiv.className = 'flex gap-3 max-w-3xl';
+            msgDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0 text-xs">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 text-slate-400 text-sm flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-indigo-500 animate-bounce"></div>
+                    <div class="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]"></div>
+                    <div class="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]"></div>
+                </div>
+            `;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function removeLoadingMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function clearChat() {
+            chatHistory = [];
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = `
+                <div class="flex gap-3 max-w-3xl">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0 text-xs">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 text-slate-200 text-sm leading-relaxed shadow-sm">
+                        История очищена. Чем я могу помочь тебе сейчас?
+                    </div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        // Auto resize chat textarea
+        document.getElementById('chat-input').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 128) + 'px';
+        });
+
+        // ================= 2. IMAGE MODULE =================
+        async function generateImage() {
+            const prompt = document.getElementById('image-prompt').value.trim();
+            const aspect = document.getElementById('image-aspect').value;
+
+            if (!prompt) {
+                showToast("Введите текстовое описание картинки", "error");
+                return;
+            }
+
+            const placeholder = document.getElementById('image-placeholder');
+            const loader = document.getElementById('image-loader');
+            const outputWrapper = document.getElementById('image-output-wrapper');
+            const outputImg = document.getElementById('image-output');
+            const btn = document.getElementById('generate-img-btn');
+
+            placeholder.classList.add('hidden');
+            outputWrapper.classList.add('hidden');
+            loader.classList.remove('hidden');
+            loader.classList.add('flex');
+            btn.disabled = true;
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ['IMAGE'],
+                        imageConfig: { aspectRatio: aspect }
+                    }
+                };
+
+                const data = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const part = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                if (part && part.inlineData) {
+                    const imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                    outputImg.src = imageUrl;
+                    document.getElementById('download-img-btn').href = imageUrl;
+
+                    loader.classList.add('hidden');
+                    loader.classList.remove('flex');
+                    outputWrapper.classList.remove('hidden');
+                    outputWrapper.classList.add('flex');
+                } else {
+                    throw new Error("Изображение не получено");
+                }
+            } catch (err) {
+                loader.classList.add('hidden');
+                loader.classList.remove('flex');
+                placeholder.classList.remove('hidden');
+                showToast("Ошибка при генерации изображения.", "error");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ================= 3. TTS AUDIO MODULE =================
+        async function generateTTS() {
+            const text = document.getElementById('tts-input').value.trim();
+            const voice = document.getElementById('tts-voice').value;
+
+            if (!text) {
+                showToast("Введите текст для озвучки", "error");
+                return;
+            }
+
+            const placeholder = document.getElementById('tts-placeholder');
+            const loader = document.getElementById('tts-loader');
+            const container = document.getElementById('tts-audio-container');
+            const player = document.getElementById('tts-audio-player');
+            const btn = document.getElementById('tts-btn');
+
+            placeholder.classList.add('hidden');
+            container.classList.add('hidden');
+            loader.classList.remove('hidden');
+            loader.classList.add('flex');
+            btn.disabled = true;
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: text }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: voice }
+                            }
+                        }
+                    }
+                };
+
+                const data = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const part = data?.candidates?.[0]?.content?.parts?.[0];
+                const audioBase64 = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType || "audio/L16";
+
+                if (audioBase64) {
+                    // Extract sample rate or fallback to 24000
+                    const match = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = match ? parseInt(match[1], 10) : 24000;
+
+                    // Convert PCM to WAV
+                    const pcmData = base64ToArrayBuffer(audioBase64);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+
+                    player.src = audioUrl;
+                    loader.classList.add('hidden');
+                    loader.classList.remove('flex');
+                    container.classList.remove('hidden');
+                    container.classList.add('flex');
+                    player.play();
+                } else {
+                    throw new Error("Аудио данные отсутствуют");
+                }
+            } catch (err) {
+                loader.classList.add('hidden');
+                loader.classList.remove('flex');
+                placeholder.classList.remove('hidden');
+                showToast("Ошибка при генерации аудио.", "error");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Helper: Base64 to ArrayBuffer
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // Helper: PCM 16-bit to WAV Blob
+        function pcmToWav(pcm16, sampleRate) {
+            const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+            const view = new DataView(buffer);
+
+            /* RIFF identifier */
+            writeString(view, 0, 'RIFF');
+            /* RIFF chunk length */
+            view.setUint32(4, 36 + pcm16.length * 2, true);
+            /* RIFF type */
+            writeString(view, 8, 'WAVE');
+            /* format chunk identifier */
+            writeString(view, 12, 'fmt ');
+            /* format chunk length */
+            view.setUint32(16, 16, true);
+            /* sample format (raw PCM) */
+            view.setUint16(20, 1, true);
+            /* channel count (mono = 1) */
+            view.setUint16(22, 1, true);
+            /* sample rate */
+            view.setUint32(24, sampleRate, true);
+            /* byte rate (sampleRate * 2) */
+            view.setUint32(28, sampleRate * 2, true);
+            /* block align */
+            view.setUint16(32, 2, true);
+            /* bits per sample */
+            view.setUint16(34, 16, true);
+            /* data chunk identifier */
+            writeString(view, 36, 'data');
+            /* data chunk length */
+            view.setUint32(40, pcm16.length * 2, true);
+
+            // Write PCM samples
+            let offset = 44;
+            for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        // ================= 4. RELAX RADIO MODULE =================
+        const radioStations = [
+            {
+                id: 'chillout',
+                name: 'Groove Salad (Chillout)',
+                desc: 'Спокойный эмбиент и даунтемпо для расслабления',
+                icon: 'fa-cloud-moon',
+                url: 'https://ice1.somafm.com/groovesalad-128-mp3'
+            },
+            {
+                id: 'dronezone',
+                name: 'Drone Zone (Ambient)',
+                desc: 'Глубокая эмбиент-музыка без слов для медитации и сна',
+                icon: 'fa-wind',
+                url: 'https://ice1.somafm.com/dronezone-128-mp3'
+            },
+            {
+                id: 'classical',
+                name: 'Peaceful Classical',
+                desc: 'Нежная и спокойная классическая музыка',
+                icon: 'fa-music',
+                url: 'https://stream.radiojar.com/8s423cm3wtzuv'
+            },
+            {
+                id: 'deepfocus',
+                name: 'Deep Focus (SomaFM DefCon)',
+                desc: 'Фоновая музыка для концентрации и учёбы',
+                icon: 'fa-brain',
+                url: 'https://ice1.somafm.com/defcon-128-mp3'
+            }
+        ];
+
+        let currentStation = null;
+        const radioAudio = document.getElementById('radio-audio-player');
+
+        function renderStations() {
+            const container = document.getElementById('stations-list');
+            container.innerHTML = radioStations.map(station => `
+                <div onclick="selectStation('${station.id}')" id="station-card-${station.id}" class="station-card bg-slate-900/60 border border-slate-800/80 hover:border-indigo-500/40 rounded-xl p-4 cursor-pointer transition flex items-center gap-3.5 group">
+                    <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/60 flex items-center justify-center text-slate-400 group-hover:text-indigo-400 group-hover:border-indigo-500/40 shrink-0 transition">
+                        <i class="fa-solid ${station.icon} text-base"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <h4 class="text-xs font-semibold text-slate-200 truncate group-hover:text-indigo-300 transition">${station.name}</h4>
+                        <p class="text-[11px] text-slate-500 truncate mt-0.5">${station.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectStation(id) {
+            const station = radioStations.find(s => s.id === id);
+            if (!station) return;
+
+            currentStation = station;
+            
+            // Highlight Card
+            document.querySelectorAll('.station-card').forEach(el => {
+                el.classList.remove('bg-indigo-600/10', 'border-indigo-500/50');
+                el.classList.add('bg-slate-900/60', 'border-slate-800/80');
+            });
+            const activeCard = document.getElementById(`station-card-${id}`);
+            if (activeCard) {
+                activeCard.classList.remove('bg-slate-900/60', 'border-slate-800/80');
+                activeCard.classList.add('bg-indigo-600/10', 'border-indigo-500/50');
+            }
+
+            // Update UI Title
+            document.getElementById('current-station-title').innerText = station.name;
+            document.getElementById('current-station-desc').innerText = station.desc;
+
+            // Load and Play safely
+            radioAudio.pause();
+            radioAudio.src = station.url;
+            radioAudio.load();
+
+            const playPromise = radioAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    updateRadioUI(true);
+                }).catch(err => {
+                    console.warn("Audio play error:", err);
+                    updateRadioUI(false);
+                    showToast("Не удалось воспроизвести поток. Попробуйте другую станцию.", "error");
+                });
+            }
+        }
+
+        function toggleRadioPlay() {
+            if (!currentStation) {
+                selectStation(radioStations[0].id);
+                return;
+            }
+
+            if (radioAudio.paused) {
+                const playPromise = radioAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => updateRadioUI(true))
+                               .catch(() => showToast("Ошибка воспроизведения радио.", "error"));
+                }
+            } else {
+                radioAudio.pause();
+                updateRadioUI(false);
+            }
+        }
+
+        radioAudio.addEventListener('error', (e) => {
+            console.error("Radio stream error event triggered", e);
+            updateRadioUI(false);
+            showToast("Ошибка воспроизведения аудиопотока.", "error");
+        });
+
+        function updateRadioUI(isPlaying) {
+            const playIcon = document.getElementById('radio-play-icon');
+            const discIcon = document.getElementById('radio-disc-icon');
+            const liveBadge = document.getElementById('live-badge');
+
+            if (isPlaying) {
+                playIcon.className = 'fa-solid fa-pause';
+                discIcon.classList.add('animate-spin');
+                liveBadge.classList.remove('hidden');
+            } else {
+                playIcon.className = 'fa-solid fa-play';
+                discIcon.classList.remove('animate-spin');
+                liveBadge.classList.add('hidden');
+            }
+        }
+
+        function changeRadioVolume(val) {
+            radioAudio.volume = parseFloat(val);
+        }
+
+        // Web Audio Synthesizer for Ambient Sounds (Rain, Fire, Waves)
+        let ambientAudioContext = null;
+        const activeAmbientNodes = {};
+
+        function toggleAmbientSound(type) {
+            if (!ambientAudioContext) {
+                ambientAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const btn = document.getElementById(`amb-btn-${type}`);
+
+            if (activeAmbientNodes[type]) {
+                // Stop noise
+                activeAmbientNodes[type].gain.gain.exponentialRampToValueAtTime(0.0001, ambientAudioContext.currentTime + 0.5);
+                setTimeout(() => {
+                    activeAmbientNodes[type].source.stop();
+                    delete activeAmbientNodes[type];
+                }, 500);
+
+                btn.innerText = 'Включить';
+                btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition';
+            } else {
+                // Generate procedural noise for ambience
+                const bufferSize = ambientAudioContext.sampleRate * 2;
+                const buffer = ambientAudioContext.createBuffer(1, bufferSize, ambientAudioContext.sampleRate);
+                const output = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+
+                const whiteNoise = ambientAudioContext.createBufferSource();
+                whiteNoise.buffer = buffer;
+                whiteNoise.loop = true;
+
+                // Filter sound based on type
+                const filter = ambientAudioContext.createBiquadFilter();
+                const gain = ambientAudioContext.createGain();
+
+                if (type === 'rain') {
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1000;
+                    gain.gain.value = 0.15;
+                } else if (type === 'fire') {
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 400;
+                    gain.gain.value = 0.2;
+                } else if (type === 'waves') {
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 400;
+                    gain.gain.value = 0.25;
+                }
+
+                whiteNoise.connect(filter);
+                filter.connect(gain);
+                gain.connect(ambientAudioContext.destination);
+
+                whiteNoise.start();
+                activeAmbientNodes[type] = { source: whiteNoise, gain: gain };
+
+                btn.innerText = 'Выключить';
+                btn.className = 'px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs text-white font-medium transition';
+            }
+        }
+
+        // Init Radio on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderStations();
+        });
+    </script>
+</body>
+</html>
